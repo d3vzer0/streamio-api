@@ -21,6 +21,9 @@ ENV MONGO_IP="${MONGO_IP}"
 ARG MONGO_PORT=27017
 ENV MONGO_PORT="${MONGO_PORT}"
 
+ARG MONGO_AUTH=admin
+ENV MONGO_AUTH="${MONGO_AUTH}"
+
 WORKDIR phishyme-api
 COPY . /phishyme-api
 ENTRYPOINT ["python", "./run.py"]

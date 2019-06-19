@@ -10,5 +10,8 @@ app.config['KAFKA_HOST'] = os.getenv('KAFKA_HOST', 'localhost:29092')
 app.config['MONGODB_SETTINGS'] = {
     'db': 'phishyme',
     'host': os.getenv('DBHOST', 'localhost'),
-    'port': os.getenv('DBPORT', 27017)
+    'port': os.getenv('DBPORT', 27017),
+    'username': os.getenv('MONGO_USER', None),
+    'password': os.getenv('MONGO_PASSWORD', None),
+    'authentication_source': os.getenv('MONGO_AUTH', None),
 }
