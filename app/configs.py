@@ -8,10 +8,9 @@ app.config['FLASK_PORT'] = int(os.getenv('FLASK_PORT', 5000))
 app.config['CORS_DOMAIN'] = os.getenv('CORS_DOMAIN', '*')
 app.config['KAFKA_HOST'] = os.getenv('KAFKA_HOST', 'localhost:29092')
 app.config['MONGODB_SETTINGS'] = {
-    'db': 'phishyme',
+    'db': os.getenv('MONGO_DB', 'phishyme'),
     'host': os.getenv('DBHOST', 'localhost'),
-    'port': os.getenv('DBPORT', 27017),
+    'port': int(os.getenv('DBPORT', 27017)),
     'username': os.getenv('MONGO_USER', None),
     'password': os.getenv('MONGO_PASSWORD', None),
-    'authentication_source': os.getenv('MONGO_AUTH', None),
 }
