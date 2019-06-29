@@ -3,14 +3,14 @@ from app.models import Users
 from app.operations import User, Token
 from app.validators import Authentication
 from flask import Flask, request, g, redirect
-from flask_restful import Api, Resource, reqparse
+from flask_restful import Api, Resource, reqparse, abort
 from flask_jwt_extended import (
     jwt_required, create_access_token,
     get_jwt_identity, get_jwt_claims,
     create_refresh_token, jwt_refresh_token_required,
-    get_raw_jwt
+    get_raw_jwt, verify_jwt_in_request
 )
-
+import json
 
 @jwt.user_claims_loader
 def add_claims_to_access_token(user):
@@ -36,45 +36,127 @@ def check_if_token_in_blacklist(decrypted_token):
     return is_revoked
 
 
-class APIUsers(Resource):
-    decorators = []
+def verify_setup(func):
+    def wrapper(*args, **kwargs):
+        user_count = Users.objects(role='admin').count()
+        if user_count == 0: return func(*args, **kwargs)
+        abort(403)
+    return wrapper
+
+
+def admin_required(func):
+    def wrapper(*args, **kwargs):
+        verify_jwt_in_request()
+        claims = get_jwt_claims()
+        if claims['role'] == 'admin': return func(*args, **kwargs)
+        abort(403)
+    return wrapper
+
+
+class APISetup(Resource):
+    decorators = [verify_setup]
 
     def __init__(self):
         self.args = reqparse.RequestParser()
-        if request.method == "POST":
-            self.args.add_argument('username', location='json',required=True, help='Username')
-            self.args.add_argument('password', location='json', required=True, help='Password')
-            self.args.add_argument('email', location='json', required=True, help='Username')
+        if request.method == 'POST':
+            self.args.add_argument('username', location='json',required=True, help='Username field is required')
+            self.args.add_argument('password', location='json', required=True, help='Password field is required')
+            self.args.add_argument('password_confirm', location='json', required=True, help='Password confirmation field is required')
 
     def post(self):
         args = self.args.parse_args()
-        operation = User().create(args['username'], args['password'], args['email'])
-        return operation
+        result = User(args['username']).create(args.password, args.password_confirm, 'admin')
+        return result
+
+api.add_resource(APISetup, '/api/v1/setup')
+
+class APIUsers(Resource):
+    decorators = [jwt_required, admin_required]
+
+    def __init__(self):
+        self.args = reqparse.RequestParser()
+        if request.method == 'GET':
+            self.args.add_argument('skip', location='args', required=False, default=0, help='Start', type=int)
+            self.args.add_argument('limit', location='args', required=False, default=20, help='Length', type=int)
+            self.args.add_argument('search', location='args', required=False, help='Search', type=str, default="")
+
+        if request.method == 'POST':
+            self.args.add_argument('username', location='json',required=True, help='Username field is required')
+            self.args.add_argument('password', location='json', required=True, help='Password field is required')
+            self.args.add_argument('role', location='json', required=False, default='user', help='Create user with specific role')
+            self.args.add_argument('password_confirm', location='json', required=True, help='Password confirmation field is required')
+
+
+    def post(self):
+        args = self.args.parse_args()
+        result = User(args['username']).create(args.password, args.password_confirm, args.role)
+        return result
 
     def get(self):
-        users_objects = Users.objects().to_json()
-        result = json.loads(user_object)
+        args = self.args.parse_args()
+        result = User(args.search).get(args.skip, args.limit)
         return result
 
 api.add_resource(APIUsers, '/api/v1/users')
 
 
 class APIUser(Resource):
-    decorators = []
+    decorators = [jwt_required, admin_required]
 
-    def delete(self, user_id=None):
-        if user_id == None:
-            result = {"result":"failed", "message":"Requires user ID"}
+    def __init__(self):
+        self.args = reqparse.RequestParser()
+
+        if request.method == 'PUT':
+            self.args.add_argument('password', location='json', required=False, help='Password field is required')
+            self.args.add_argument('password_confirm', location='json', required=True, help='Password confirmation field is required')
+            self.args.add_argument('role', location='json', required=True, help='Role field', choices=('user', 'admin   '))
+
+
+    def delete(self, username):
+        current_user = get_jwt_identity()
+        if current_user == username: 
+            result = {'result':'failed', 'message':'Unable to delete self'}, 403
         else:
-            current_user = str(g.currentUser.id)
-            if user_id == current_user:
-                result = {"result":"failed", "message":"Can't delete own user"}
-            else:
-                result = User().delete(user_id)
+            result = User(username).delete()
+        return result
+
+    def put(self, username):
+        args = self.args.parse_args()
+        result = User(username).update(args.password, args.password_confirm, args.role)
+        return result
+        
+
+
+        # if user_id == None:
+        #     result = {"result":"failed", "message":"Requires user ID"}
+        # else:
+        #     current_user = str(g.currentUser.id)
+        #     if user_id == current_user:
+        #         result = {"result":"failed", "message":"Can't delete own user"}
+        #     else:
+        #         result = User().delete(user_id)
 
         return result
 
-api.add_resource(APIUser, '/api/v1/user/<string:user_id>')
+api.add_resource(APIUser, '/api/v1/user/<string:username>')
+
+
+class APISelf(Resource):
+    decorators = [jwt_required]
+
+    def __init__(self):
+        self.args = reqparse.RequestParser()
+
+        if request.method == 'PUT':
+            self.args.add_argument('password', location='json', required=True, help='Password field is required')
+            self.args.add_argument('password_confirm', location='json', required=True, help='Password confirmation field is required')
+            self.args.add_argument('password_old', location='json', required=True, help='Password confirmation field is required')
+
+
+    def put(self, username):
+        return ''
+        
+api.add_resource(APISelf, '/api/v1/user')
 
 
 class APILogin(Resource):
@@ -94,7 +176,6 @@ class APILogin(Resource):
 
         else:
             return validate, 401
-
 
 api.add_resource(APILogin, '/api/v1/login')
 

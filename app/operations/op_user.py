@@ -1,24 +1,49 @@
 from app.models import Users
-from app.utils import Random
+from app.utils import SaltedPassword
 import mongoengine
-import hashlib
+import json
 
+def verify_create(func):
+    def wrapper(origin, password, password_confirm, role='user'):
+        if password != password_confirm:
+            result = {'result':'failed', 'message':'Confirmation password does not match password'}
+            return result
+        else:
+            return func(origin, password, password_confirm, role)
+
+    return wrapper
 
 class User:
     def __init__(self, username):
-        self.username = username
+        self.username = username.replace(' ', '')
 
-    def create(self, password):
+    def get(self, skip, limit):
+        users_object = Users.objects(username__contains=self.username).only('username', 'role')
+        result = {'count':users_object.count(), 'results':json.loads(users_object.skip(skip).limit(limit).to_json())}
+        return result
+
+    @verify_create
+    def update(self, password, password_confirm, user_role='user'):
         try:
-            salt = Random(32).create()
-            password_hash = hashlib.sha512()
-            password_string = salt + password
-            password_hash.update(password_string.encode('utf-8'))
-            password_hash = str(password_hash.hexdigest())
+            user_object = Users.objects(username=self.username)
+            password_hash, salt = SaltedPassword(password).create()
+            update_user = user_object.update(set__salt=salt, set__password=password_hash, set__role=user_role)
+            result = {'result': 'created', 'message': 'Succesfully updated user'}
 
-            user = Users(username=self.username, salt=salt,
-                password=password_hash).save()
+        except mongoengine.errors.DoesNotExist:
+            result = {'result': 'failed', 'message': 'User does not exists'}
 
+        except Exception as err:
+            print(err)
+            result = {'result': 'failed', 'message': 'Failed to update user'}
+
+        return result
+
+    @verify_create
+    def create(self, password, password_confirm, user_role='user'):
+        try:
+            password_hash, salt = SaltedPassword(password).create()
+            user = Users(username=self.username, salt=salt, password=password_hash, role=user_role).save()
             result = {'result': 'created', 'message': 'Succesfully created user'}
 
         except mongoengine.errors.NotUniqueError:

@@ -1,6 +1,7 @@
 from app import db
 import datetime
 
+role_options = ('admin', 'user')
 source_options = ('transparency', 'phishtank')
 matching_types = ('regex', 'fuzzy')
 
@@ -58,4 +59,5 @@ class RevokedTokens(db.Document):
 class Users(db.Document):
     username = db.StringField(max_length=50, required=True, unique=True)
     password = db.StringField(max_length=128, required=True)
+    role = db.StringField(required=True, choices=role_options)
     salt = db.StringField(required=True, max_length=128)

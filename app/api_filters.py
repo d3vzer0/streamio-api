@@ -1,20 +1,34 @@
-from app import app, api
+from app import app, api, jwt
 from app.operations import Regex, Fuzzy, Whitelist
 from app.utils import Streaming
 from flask import Flask, request, g
-from flask_restful import Api, Resource, reqparse
+from flask_restful import Api, Resource, reqparse, abort
 from flask_jwt_extended import (
     jwt_required, create_access_token,
-    get_jwt_identity, get_jwt_claims
+    get_jwt_identity, get_jwt_claims,
+    verify_jwt_in_request
 )
 
 from bson.json_util import dumps as loadbson
 import json
 import asyncio
 
+@jwt.user_claims_loader
+def add_claims_to_access_token(user):
+    result = {'role':user.role}
+    return result
+
+def admin_required(func):
+    def wrapper(*args, **kwargs):
+        verify_jwt_in_request()
+        claims = get_jwt_claims()
+        if claims['role'] == 'admin': return func(*args, **kwargs)
+        abort(403)
+    return wrapper
+
 
 class APIWhitelists(Resource):
-    decorators = []
+    decorators = [jwt_required]
 
     def __init__(self):
         self.args = reqparse.RequestParser()
@@ -32,6 +46,7 @@ class APIWhitelists(Resource):
         result = Whitelist(args.value).get()
         return result
 
+    @admin_required
     def post(self):
         args = self.args.parse_args()
         result = Whitelist(args.value).create()
@@ -42,7 +57,7 @@ api.add_resource(APIWhitelists, '/api/v1/whitelist')
 
 
 class APIWhitelist(Resource):
-    decorators = []
+    decorators = [jwt_required, admin_required]
 
     def delete(self, whitelist_name):
         result = Whitelist(whitelist_name).delete()
@@ -53,7 +68,7 @@ api.add_resource(APIWhitelist, '/api/v1/whitelist/<string:whitelist_name>')
 
 
 class APIRegex(Resource):
-    decorators = []
+    decorators = [jwt_required]
 
     def __init__(self):
         self.args = reqparse.RequestParser()
@@ -66,7 +81,7 @@ class APIRegex(Resource):
             self.args.add_argument('limit', location='args', required=False, type=int)
             self.args.add_argument('value', required=False, default='', type=str)
 
-
+    @admin_required
     def post(self):
         args = self.args.parse_args()
         result = Regex(args.value).create(args.score)
@@ -82,7 +97,7 @@ api.add_resource(APIRegex, '/api/v1/filters/regex')
 
 
 class APIFuzzy(Resource):
-    decorators = []
+    decorators = [jwt_required]
 
     def __init__(self):
         self.args = reqparse.RequestParser()
@@ -97,6 +112,7 @@ class APIFuzzy(Resource):
             self.args.add_argument('limit', location='args', required=False, type=int)
             self.args.add_argument('value', required=False, default='', type=str)
 
+    @admin_required
     def post(self):
         args = self.args.parse_args()
         result = Fuzzy(args.value).create(args.likelihood, args.score)
@@ -112,7 +128,7 @@ api.add_resource(APIFuzzy, '/api/v1/filters/fuzzy')
 
 
 class APIFilter(Resource):
-    decorators = []
+    decorators = [jwt_required, admin_required]
 
     def delete(self, filter_type, filter_name):
         if filter_type == 'fuzzy':

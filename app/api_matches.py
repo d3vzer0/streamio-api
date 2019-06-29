@@ -3,9 +3,10 @@ from app import app, api
 from flask import Flask, request, g
 from flask_restful import Api, Resource, reqparse
 from app.operations import Match
+from flask_jwt_extended import jwt_required
 
 class APIMatches(Resource):
-    decorators = []
+    decorators = [jwt_required]
 
     def __init__(self):
         self.args = reqparse.RequestParser()

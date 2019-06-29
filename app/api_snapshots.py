@@ -2,12 +2,14 @@ from app import app, api
 from flask import Flask, request, g, make_response
 from flask_restful import Api, Resource, reqparse
 from app.models import Snapshots
+from flask_jwt_extended import jwt_required
+
 import bson
 import json
 
 
 class APISnapshot(Resource):
-    decorators = []
+    decorators = [jwt_required]
 
     def get(self, snapshot_id):
         snapshot = Snapshots.objects.get(screenshot=bson.objectid.ObjectId(snapshot_id))
@@ -21,7 +23,7 @@ api.add_resource(APISnapshot, '/api/v1/snapshot/<string:snapshot_id>')
 
 
 class APISnapshots(Resource):
-    decorators = []
+    decorators = [jwt_required]
 
     def __init__(self):
         self.args = reqparse.RequestParser()
