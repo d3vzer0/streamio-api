@@ -1,4 +1,5 @@
 from app.models import Users
+import mongoengine
 import hashlib
 
 class Authentication:
