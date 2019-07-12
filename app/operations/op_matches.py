@@ -24,6 +24,19 @@ class Match:
 
         return result
 
+    def monitor(self, action):
+        try:
+            matches_object = Matches.objects(url=self.url).update(set__enabled=action)
+            result = {'result': 'success', 'message': 'Succesfully initialised monitor for URL'}
+
+        except mongoengine.errors.DoesNotExist:
+            result = {'result': 'failed', 'message':'Url does not exist'}
+
+        except Exception as err:
+            result = {'result': 'failed', 'message':'Unable to monitor URL'}
+
+        return result
+
 
     def create(self, datasouce):
         try:

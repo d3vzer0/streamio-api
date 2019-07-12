@@ -25,7 +25,7 @@ api.add_resource(APIMatches, '/api/v1/hits')
 
 
 class APIConfirm(Resource):
-    decorators = []
+    decorators = [jwt_required]
 
     def __init__(self):
         self.args = reqparse.RequestParser()
@@ -39,4 +39,21 @@ class APIConfirm(Resource):
         return results
 
 api.add_resource(APIConfirm, '/api/v1/confirm')
+
+
+class APIMonitor(Resource):
+    decorators = [jwt_required]
+
+    def __init__(self):
+        self.args = reqparse.RequestParser()
+        if request.method == "POST":
+            self.args.add_argument('url', location='json', required=True, help='URL', type=str)
+            self.args.add_argument('action', location='json', required=True, help='Action', type=bool, choices=(True, False))
+
+    def post(self):
+        args = self.args.parse_args()
+        results = Match(args.url).monitor(args.action)
+        return results
+
+api.add_resource(APIMonitor, '/api/v1/monitor')
 
