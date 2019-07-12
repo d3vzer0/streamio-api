@@ -108,8 +108,8 @@ class APIUser(Resource):
 
         if request.method == 'PUT':
             self.args.add_argument('password', location='json', required=False, help='Password field is required')
-            self.args.add_argument('password_confirm', location='json', required=True, help='Password confirmation field is required')
-            self.args.add_argument('role', location='json', required=True, help='Role field', choices=('user', 'admin   '))
+            self.args.add_argument('password_confirm', location='json', required=False, help='Password confirmation field is required')
+            self.args.add_argument('role', location='json', required=True, help='Role field', choices=('user', 'admin'))
 
 
     def delete(self, username):
@@ -124,21 +124,41 @@ class APIUser(Resource):
         args = self.args.parse_args()
         result = User(username).update(args.password, args.password_confirm, args.role)
         return result
-        
-
-
-        # if user_id == None:
-        #     result = {"result":"failed", "message":"Requires user ID"}
-        # else:
-        #     current_user = str(g.currentUser.id)
-        #     if user_id == current_user:
-        #         result = {"result":"failed", "message":"Can't delete own user"}
-        #     else:
-        #         result = User().delete(user_id)
-
-        return result
 
 api.add_resource(APIUser, '/api/v1/user/<string:username>')
+
+
+class APIUserPassword(Resource):
+    decorators = [jwt_required, admin_required]
+
+    def __init__(self):
+        self.args = reqparse.RequestParser()
+        if request.method == 'PUT':
+            self.args.add_argument('password', location='json', required=True, help='Password field is required')
+            self.args.add_argument('password_confirm', location='json', required=True, help='Password confirmation field is required')
+
+    def put(self, username):
+        args = self.args.parse_args()
+        result = User(username).password(args.password, args.password_confirm)
+        return result
+
+api.add_resource(APIUserPassword, '/api/v1/user/<string:username>/password')
+
+
+class APIUserRole(Resource):
+    decorators = [jwt_required, admin_required]
+
+    def __init__(self):
+        self.args = reqparse.RequestParser()
+        if request.method == 'PUT':
+            self.args.add_argument('role', location='json', required=True, help='Role field is required', choices=('admin', 'user'))
+
+    def put(self, username):
+        args = self.args.parse_args()
+        result = User(username).role(args.role)
+        return result
+
+api.add_resource(APIUserRole, '/api/v1/user/<string:username>/role')
 
 
 class APISelf(Resource):

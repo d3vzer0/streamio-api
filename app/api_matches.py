@@ -43,7 +43,7 @@ api.add_resource(APIMatches, '/api/v1/hits')
 
 
 class APIConfirm(Resource):
-    decorators = [jwt_required]
+    decorators = [jwt_required, admin_required]
 
     def __init__(self):
         self.args = reqparse.RequestParser()
@@ -51,7 +51,6 @@ class APIConfirm(Resource):
             self.args.add_argument('url', location='json', required=True, help='URL', type=str)
             self.args.add_argument('action', location='json', required=True, help='Action', type=bool, choices=(True, False))
 
-    @admin_required
     def post(self):
         args = self.args.parse_args()
         results = Match(args.url).confirm(args.action)
@@ -61,7 +60,7 @@ api.add_resource(APIConfirm, '/api/v1/confirm')
 
 
 class APIMonitor(Resource):
-    decorators = [jwt_required]
+    decorators = [jwt_required, admin_required]
 
     def __init__(self):
         self.args = reqparse.RequestParser()
@@ -69,7 +68,6 @@ class APIMonitor(Resource):
             self.args.add_argument('url', location='json', required=True, help='URL', type=str)
             self.args.add_argument('action', location='json', required=True, help='Action', type=bool, choices=(True, False))
 
-    @admin_required
     def post(self):
         args = self.args.parse_args()
         results = Match(args.url).monitor(args.action)

@@ -4,12 +4,12 @@ import mongoengine
 import json
 
 def verify_create(func):
-    def wrapper(origin, password, password_confirm, role='user'):
+    def wrapper(origin, password, password_confirm, *args):
         if password != password_confirm:
             result = {'result':'failed', 'message':'Confirmation password does not match password'}
             return result
         else:
-            return func(origin, password, password_confirm, role)
+            return func(origin, password, password_confirm)
 
     return wrapper
 
@@ -23,19 +23,32 @@ class User:
         return result
 
     @verify_create
-    def update(self, password, password_confirm, user_role='user'):
+    def password(self, password, password_confirm):
         try:
             user_object = Users.objects(username=self.username)
             password_hash, salt = SaltedPassword(password).create()
-            update_user = user_object.update(set__salt=salt, set__password=password_hash, set__role=user_role)
-            result = {'result': 'created', 'message': 'Succesfully updated user'}
+            update_user = user_object.update(set__salt=salt, set__password=password_hash)
+            result = {'result': 'created', 'message': 'Succesfully updated user password'}
 
         except mongoengine.errors.DoesNotExist:
             result = {'result': 'failed', 'message': 'User does not exists'}
 
         except Exception as err:
-            print(err)
-            result = {'result': 'failed', 'message': 'Failed to update user'}
+            result = {'result': 'failed', 'message': 'Failed to update user password'}
+
+        return result
+
+    def role(self, role):
+        try:
+            user_object = Users.objects(username=self.username)
+            update_user = user_object.update(set__role=role)
+            result = {'result': 'created', 'message': 'Succesfully updated user role'}
+
+        except mongoengine.errors.DoesNotExist:
+            result = {'result': 'failed', 'message': 'User does not exists'}
+
+        except Exception as err:
+            result = {'result': 'failed', 'message': 'Failed to update user role'}
 
         return result
 
