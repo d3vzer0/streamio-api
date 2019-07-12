@@ -1,7 +1,7 @@
 
 from app import app, api, jwt
 from flask import Flask, request, g
-from flask_restful import Api, Resource, reqparse, abort
+from flask_restful import Api, Resource, reqparse, abort, inputs
 from app.operations import Match
 from flask_jwt_extended import (
     jwt_required, create_access_token,
@@ -32,10 +32,12 @@ class APIMatches(Resource):
             self.args.add_argument('skip', location='args', required=True, help='Start', type=int)
             self.args.add_argument('limit', location='args', required=True, help='Length', type=int)
             self.args.add_argument('search', location='args', required=False, help='Search', type=str, default="")
+            self.args.add_argument('confirmed', location='args', required=False, help='Confirmed', type=inputs.boolean, default=False)
+            self.args.add_argument('monitored', location='args', required=False, help='Monitored', type=inputs.boolean, default=False)
 
     def get(self):
         args = self.args.parse_args()
-        results = Match(args.search).get(args.skip, args.limit)
+        results = Match(args.search).get(args.skip, args.limit, args.confirmed, args.monitored)
         return results
 
 api.add_resource(APIMatches, '/api/v1/hits')
@@ -48,7 +50,7 @@ class APIConfirm(Resource):
         self.args = reqparse.RequestParser()
         if request.method == "POST":
             self.args.add_argument('url', location='json', required=True, help='URL', type=str)
-            self.args.add_argument('action', location='json', required=True, help='Action', type=bool, choices=(True, False))
+            self.args.add_argument('action', location='json', required=True, help='Action', type=inputs.boolean, choices=(True, False))
 
     def post(self):
         args = self.args.parse_args()
@@ -65,7 +67,7 @@ class APIMonitor(Resource):
         self.args = reqparse.RequestParser()
         if request.method == "POST":
             self.args.add_argument('url', location='json', required=True, help='URL', type=str)
-            self.args.add_argument('action', location='json', required=True, help='Action', type=bool, choices=(True, False))
+            self.args.add_argument('action', location='json', required=True, help='Action', type=inputs.boolean, choices=(True, False))
 
     def post(self):
         args = self.args.parse_args()
