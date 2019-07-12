@@ -1,7 +1,7 @@
 
 from app import app, api, jwt
 from flask import Flask, request, g
-from flask_restful import Api, Resource, reqparse
+from flask_restful import Api, Resource, reqparse, abort
 from app.operations import Match
 from flask_jwt_extended import (
     jwt_required, create_access_token,
@@ -37,7 +37,6 @@ class APIMatches(Resource):
         args = self.args.parse_args()
         results = Match(args.search).get(args.skip, args.limit)
         return results
-
 
 api.add_resource(APIMatches, '/api/v1/hits')
 
