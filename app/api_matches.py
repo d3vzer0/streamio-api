@@ -1,9 +1,27 @@
 
-from app import app, api
+from app import app, api, jwt
 from flask import Flask, request, g
 from flask_restful import Api, Resource, reqparse
 from app.operations import Match
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import (
+    jwt_required, create_access_token,
+    get_jwt_identity, get_jwt_claims,
+    verify_jwt_in_request
+)
+
+@jwt.user_claims_loader
+def add_claims_to_access_token(user):
+    result = {'role':user.role}
+    return result
+
+def admin_required(func):
+    def wrapper(*args, **kwargs):
+        verify_jwt_in_request()
+        claims = get_jwt_claims()
+        if claims['role'] == 'admin': return func(*args, **kwargs)
+        abort(403)
+    return wrapper
+
 
 class APIMatches(Resource):
     decorators = [jwt_required]
@@ -33,6 +51,7 @@ class APIConfirm(Resource):
             self.args.add_argument('url', location='json', required=True, help='URL', type=str)
             self.args.add_argument('action', location='json', required=True, help='Action', type=bool, choices=(True, False))
 
+    @admin_required
     def post(self):
         args = self.args.parse_args()
         results = Match(args.url).confirm(args.action)
@@ -50,6 +69,7 @@ class APIMonitor(Resource):
             self.args.add_argument('url', location='json', required=True, help='URL', type=str)
             self.args.add_argument('action', location='json', required=True, help='Action', type=bool, choices=(True, False))
 
+    @admin_required
     def post(self):
         args = self.args.parse_args()
         results = Match(args.url).monitor(args.action)
