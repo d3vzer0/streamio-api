@@ -11,6 +11,20 @@ class Match:
         result = {'count':matches_object.count(), 'results':json.loads(matches_object.skip(skip).limit(limit).to_json())}
         return result
 
+    def confirm(self, action):
+        try:
+            matches_object = Matches.objects(url=self.url).update(set__confirmed=action)
+            result = {'result': 'success', 'message': 'Succesfully confirmed URL'}
+
+        except mongoengine.errors.DoesNotExist:
+            result = {'result': 'failed', 'message':'Url does not exist'}
+
+        except Exception as err:
+            result = {'result': 'failed', 'message':'Unable to confirm URL'}
+
+        return result
+
+
     def create(self, datasouce):
         try:
             target_object = Matches(url=self.url, datasource=datasource).save()
@@ -20,6 +34,6 @@ class Match:
             result = {'result': 'failed', 'message': 'Target already exists'}
 
         except Exception as e:
-            result = {'result': 'failed', 'data': 'Failed to create target'}
+            result = {'result': 'failed', 'message': 'Failed to create target'}
 
         return result
