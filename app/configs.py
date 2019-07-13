@@ -6,7 +6,7 @@ import os
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET')
 app.config['FLASK_PORT'] = int(os.getenv('FLASK_PORT', 5000))
 app.config['CORS_DOMAIN'] = os.getenv('CORS_DOMAIN', '*')
-app.config['KAFKA_HOST'] = os.getenv('KAFKA_HOST', 'localhost:29092')
+app.config['FAUST_HOST'] = os.getenv('FAUST_HOST', 'http://localhost:6066')
 app.config['MONGODB_SETTINGS'] = {
     'db': os.getenv('MONGO_DB', 'phishyme'),
     'host': os.getenv('DBHOST', 'localhost'),

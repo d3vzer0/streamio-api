@@ -1,11 +1,18 @@
-from app import app, producer
+from app import app
+import requests
 import json
 
 
 class Streaming:
-    def __init__(self, refresh_type):
-        self.refresh_type = refresh_type
+    def __init__(self, faust_host=app.config['FAUST_HOST']):
+        self.faust_host = faust_host
 
-    async def refresh(self):
-        message = json.dumps({'type':self.refresh_type})
-        producer.produce(message.encode())
+    def state(self):
+        url = '{0}/filters/state'.format(self.faust_host)
+        get_state = requests.get(url)
+        return get_state.json()
+
+    async def refresh(self, refresh_type):
+        url = '{0}/filters/{1}'.format(self.faust_host, refresh_type)
+        refresh_filter = requests.get(url)
+        return refresh_filter.json()

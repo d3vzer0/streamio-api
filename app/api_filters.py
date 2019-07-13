@@ -50,7 +50,7 @@ class APIWhitelists(Resource):
     def post(self):
         args = self.args.parse_args()
         result = Whitelist(args.value).create()
-        asyncio.run(Streaming('whitelist').refresh())
+        asyncio.run(Streaming().refresh('whitelist'))
         return result
 
 api.add_resource(APIWhitelists, '/api/v1/whitelist')
@@ -61,7 +61,7 @@ class APIWhitelist(Resource):
 
     def delete(self, whitelist_name):
         result = Whitelist(whitelist_name).delete()
-        asyncio.run(Streaming('whitelist').refresh())
+        asyncio.run(Streaming().refresh('whitelist'))
         return result
 
 api.add_resource(APIWhitelist, '/api/v1/whitelist/<string:whitelist_name>')
@@ -85,7 +85,7 @@ class APIRegex(Resource):
     def post(self):
         args = self.args.parse_args()
         result = Regex(args.value).create(args.score)
-        asyncio.run(Streaming('regex').refresh())
+        asyncio.run(Streaming().refresh('regex'))
         return result
 
     def get(self):
@@ -116,7 +116,7 @@ class APIFuzzy(Resource):
     def post(self):
         args = self.args.parse_args()
         result = Fuzzy(args.value).create(args.likelihood, args.score)
-        asyncio.run(Streaming('fuzzy').refresh())
+        asyncio.run(Streaming().refresh('fuzzy'))
         return result
 
     def get(self):
@@ -133,11 +133,11 @@ class APIFilter(Resource):
     def delete(self, filter_type, filter_name):
         if filter_type == 'fuzzy':
             result = Fuzzy(filter_name).delete()
-            asyncio.run(Streaming('fuzzy').refresh())
+            asyncio.run(Streaming().refresh('fuzzy'))
 
         elif filter_type == 'regex':
             result = Regex(filter_name).delete()
-            asyncio.run(Streaming('regex').refresh())
+            asyncio.run(Streaming().refresh('regex'))
         else:
             result = {'result':'failed', 'data':'Invalid filter type '}
 
@@ -145,3 +145,12 @@ class APIFilter(Resource):
 
 
 api.add_resource(APIFilter, '/api/v1/filter/<string:filter_type>/<string:filter_name>')
+
+class APIFiltersState(Resource):
+    decorators = [jwt_required, admin_required]
+
+    def get(self):
+        result = Streaming().state()
+        return result
+
+api.add_resource(APIFiltersState, '/api/v1/filters/state')
