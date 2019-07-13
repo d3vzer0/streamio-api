@@ -9,7 +9,7 @@ def verify_create(func):
             result = {'result':'failed', 'message':'Confirmation password does not match password'}
             return result
         else:
-            return func(origin, password, password_confirm)
+            return func(origin, password, password_confirm, *args)
 
     return wrapper
 
