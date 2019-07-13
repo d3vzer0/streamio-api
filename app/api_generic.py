@@ -70,6 +70,7 @@ class APISetup(Resource):
 
 api.add_resource(APISetup, '/api/v1/setup')
 
+
 class APIUsers(Resource):
     decorators = [jwt_required, admin_required]
 
@@ -166,15 +167,21 @@ class APISelf(Resource):
 
     def __init__(self):
         self.args = reqparse.RequestParser()
-
         if request.method == 'PUT':
             self.args.add_argument('password', location='json', required=True, help='Password field is required')
             self.args.add_argument('password_confirm', location='json', required=True, help='Password confirmation field is required')
             self.args.add_argument('password_old', location='json', required=True, help='Password confirmation field is required')
 
 
-    def put(self, username):
-        return ''
+    def put(self):
+        args = self.args.parse_args()
+        current_user = get_jwt_identity()
+        validate = Authentication.login(current_user, args.password_old)
+        if validate['result'] == 'success':
+            result = User(current_user).password(args.password, args.password_confirm)
+            return result
+        else:
+            return validate
         
 api.add_resource(APISelf, '/api/v1/user')
 
@@ -232,4 +239,3 @@ class APILogout(Resource):
         return revoke_token
 
 api.add_resource(APILogout, '/api/v1/logout/token')
-
