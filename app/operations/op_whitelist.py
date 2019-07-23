@@ -7,9 +7,9 @@ class Whitelist:
     def __init__(self, value):
         self.value = value
     
-    def get(self):
+    def get(self, skip, limit,):
         objects = DBWhitelist.objects()
-        result = {'count':objects.count(), 'data':json.loads(objects.to_json())}
+        result = {'count':objects.count(), 'data':json.loads(objects.skip(skip).limit(limit).to_json())}
         return result
 
     def create(self):

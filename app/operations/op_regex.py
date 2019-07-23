@@ -7,9 +7,9 @@ class Regex:
     def __init__(self, value):
         self.value = value
 
-    def get(self):
+    def get(self, skip, limit,):
         objects = DBRegex.objects()
-        result = {'count':objects.count(), 'data':json.loads(objects.to_json())}
+        result = {'count':objects.count(), 'data':json.loads(objects.skip(skip).limit(limit).to_json())}
         return result
 
     def create(self, score=None):

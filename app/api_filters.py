@@ -36,14 +36,14 @@ class APIWhitelists(Resource):
             self.args.add_argument('value', location='json', required=True, help='Value', type=str)
 
         if request.method == "GET":
-            self.args.add_argument('skip', location='args', help='Start', required=False, type=int)
-            self.args.add_argument('limit', location='args', required=False, type=int)
+            self.args.add_argument('skip', location='args', required=True, help='Start', type=int)
+            self.args.add_argument('limit', location='args', required=True, help='Length', type=int)
             self.args.add_argument('value', required=False, default='', type=str)
 
 
     def get(self):
         args = self.args.parse_args()
-        result = Whitelist(args.value).get()
+        result = Whitelist(args.value).get(args.skip, args.limit)
         return result
 
     @admin_required
@@ -77,8 +77,8 @@ class APIRegex(Resource):
             self.args.add_argument('score', location='json', required=False, default=80, type=int)
 
         if request.method == "GET":
-            self.args.add_argument('start', location='args', help='Start', required=False, type=int)
-            self.args.add_argument('limit', location='args', required=False, type=int)
+            self.args.add_argument('skip', location='args', required=True, help='Start', type=int)
+            self.args.add_argument('limit', location='args', required=True, help='Length', type=int)
             self.args.add_argument('value', required=False, default='', type=str)
 
     @admin_required
@@ -90,7 +90,7 @@ class APIRegex(Resource):
 
     def get(self):
         args = self.args.parse_args()
-        result = Regex(args.value).get()
+        result = Regex(args.value).get(args.skip, args.limit)
         return result
 
 api.add_resource(APIRegex, '/api/v1/filters/regex')
@@ -108,8 +108,8 @@ class APIFuzzy(Resource):
 
 
         if request.method == "GET":
-            self.args.add_argument('start', location='args', help='Start', required=False, type=int)
-            self.args.add_argument('limit', location='args', required=False, type=int)
+            self.args.add_argument('skip', location='args', required=True, help='Start', type=int)
+            self.args.add_argument('limit', location='args', required=True, help='Length', type=int)
             self.args.add_argument('value', required=False, default='', type=str)
 
     @admin_required
@@ -121,7 +121,7 @@ class APIFuzzy(Resource):
 
     def get(self):
         args = self.args.parse_args()
-        result = Fuzzy(args.value).get()
+        result = Fuzzy(args.value).get(args.skip, args.limit)
         return result
 
 api.add_resource(APIFuzzy, '/api/v1/filters/fuzzy')

@@ -42,6 +42,7 @@ class Matches(db.Document):
     timestamp = db.DateTimeField(required=False, default=datetime.datetime.now)
     datasource = db.StringField(max_length=50, required=True, choices=source_options)
     matching = db.EmbeddedDocumentField(Matching)
+    tags = db.ListField(db.StringField(max_length=50))
 
     url = db.StringField(max_length=1000, required=True)
     frequency = db.IntField(required=False, default=900)
