@@ -6,12 +6,27 @@ class Match:
     def __init__(self, url):
         self.url = url
 
-    def get(self, skip, limit, confirmed, monitored):
-        if monitored:
-            matches_object = Matches.objects(url__contains=self.url, enabled=True, confirmed=confirmed).order_by('-timestamp')
-        else:
-            matches_object = Matches.objects(url__contains=self.url, confirmed=confirmed).order_by('-timestamp')
+    def get(self, skip, limit, tags):
+        matches_object = Matches.objects(url__contains=self.url, tags=tags).order_by('-timestamp')
         result = {'count':matches_object.count(), 'results':json.loads(matches_object.skip(skip).limit(limit).to_json())}
+        return result
+
+
+    def tag(self, action, tag):
+        try:
+            if action == True:
+                matches_object = Matches.objects(url=self.url).update(add_to_set__tags=tag)
+            else:
+                matches_object = Matches.objects(url=self.url).update(pull__tags=tag)
+
+            result = {'result': 'success', 'message': 'Succesfully tagged URL'}
+
+        except mongoengine.errors.DoesNotExist:
+            result = {'result': 'failed', 'message':'Url does not exist'}
+
+        except Exception as err:
+            result = {'result': 'failed', 'message':'Unable to tag URL'}
+
         return result
 
     def confirm(self, action):

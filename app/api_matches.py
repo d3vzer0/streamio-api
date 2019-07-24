@@ -34,16 +34,17 @@ class APIMatches(Resource):
             self.args.add_argument('search', location='args', required=False, help='Search', type=str, default="")
             self.args.add_argument('confirmed', location='args', required=False, help='Confirmed', type=inputs.boolean, default=False)
             self.args.add_argument('monitored', location='args', required=False, help='Monitored', type=inputs.boolean, default=False)
+            self.args.add_argument('tags[]', action='append', location='args', required=False, help='Monitored', default=[])
 
     def get(self):
         args = self.args.parse_args()
-        results = Match(args.search).get(args.skip, args.limit, args.confirmed, args.monitored)
+        results = Match(args.search).get(args.skip, args.limit, args['tags[]'])
         return results
 
 api.add_resource(APIMatches, '/api/v1/hits')
 
 
-class APIConfirm(Resource):
+class APITags(Resource):
     decorators = [jwt_required, admin_required]
 
     def __init__(self):
@@ -51,13 +52,14 @@ class APIConfirm(Resource):
         if request.method == "POST":
             self.args.add_argument('url', location='json', required=True, help='URL', type=str)
             self.args.add_argument('action', location='json', required=True, help='Action', type=inputs.boolean, choices=(True, False))
+            self.args.add_argument('tag', location='json', required=True, help='Tag', type=str)
 
     def post(self):
         args = self.args.parse_args()
-        results = Match(args.url).confirm(args.action)
+        results = Match(args.url).tag(args.action, args.tag)
         return results
 
-api.add_resource(APIConfirm, '/api/v1/confirm')
+api.add_resource(APITags, '/api/v1/tags')
 
 
 class APIMonitor(Resource):
