@@ -16,3 +16,8 @@ class Streaming:
         url = '{0}/filters/{1}'.format(self.faust_host, refresh_type)
         refresh_filter = requests.get(url)
         return refresh_filter.json()
+
+    async def confirm(self, target_url, state):
+        url = '{0}/matches/confirm'.format(self.faust_host)
+        confirm_url = requests.post(url, json={'url': target_url, 'state':state})
+        return confirm_url.json()

@@ -1,5 +1,6 @@
 
 from app import app, api, jwt
+from app.utils import Streaming
 from flask import Flask, request, g
 from flask_restful import Api, Resource, reqparse, abort, inputs
 from app.operations import Match
@@ -8,6 +9,8 @@ from flask_jwt_extended import (
     get_jwt_identity, get_jwt_claims,
     verify_jwt_in_request
 )
+import asyncio
+
 
 @jwt.user_claims_loader
 def add_claims_to_access_token(user):
@@ -57,6 +60,8 @@ class APITags(Resource):
     def post(self):
         args = self.args.parse_args()
         results = Match(args.url).tag(args.action, args.tag)
+        if (args.tag == 'true-positive' or args.tag == 'false-positive') and args.action == True:
+            asyncio.run(Streaming().confirm(args.url, args.tag))
         return results
 
 api.add_resource(APITags, '/api/v1/tags')
