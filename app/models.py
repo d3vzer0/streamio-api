@@ -5,6 +5,11 @@ role_options = ('admin', 'user')
 source_options = ('transparency', 'phishtank')
 matching_types = ('regex', 'fuzzy')
 
+class ComparePages(db.Document):
+    url = db.StringField(max_length=1000, required=True, unique=True)
+    score = db.IntField(required=True, max_value=100)
+    tag = db.StringField(required=True, max_length=100)
+
 class Whitelist(db.Document):
     domain = db.StringField(required=True, max_length=500, unique=True)
 
@@ -26,6 +31,7 @@ class Snapshots(db.Document):
     timestamp = db.DateTimeField(required=False, default=datetime.datetime.now)
     response = db.EmbeddedDocumentField(Responses)
     sha256 = db.StringField(max_length=256, required=True)
+    dhash = db.StringField(max_length=16)
     screenshot = db.FileField()
 
     meta = {

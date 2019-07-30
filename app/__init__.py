@@ -20,3 +20,4 @@ from app import api_generic
 from app import api_matches
 from app import api_snapshots
 from app import api_filters
+from app import api_comparepage
