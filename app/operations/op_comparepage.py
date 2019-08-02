@@ -33,7 +33,7 @@ class ComparePage:
 
     def delete(self):
         try:
-            filter_object = ComparePages.objects.get(url=self.url).delete()
+            filter_object = ComparePages.objects.get(id=self.url).delete()
             result = {'result': 'deleted', 'message': 'Deleted url from compare table'}
 
         except mongoengine.errors.DoesNotExist:

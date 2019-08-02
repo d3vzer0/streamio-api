@@ -61,9 +61,8 @@ class APIComparePage(Resource):
     decorators = [jwt_required, admin_required]
 
 
-    def delete(self, whitelist_name):
-        # result = Whitelist(whitelist_name).delete()
-        # asyncio.run(Streaming().refresh('whitelist'))
-        return 'result'
+    def delete(self, compare_id):
+        result = ComparePage(compare_id).delete()
+        return result
 
 api.add_resource(APIComparePage, '/api/v1/comparepage/<string:compare_id>')
