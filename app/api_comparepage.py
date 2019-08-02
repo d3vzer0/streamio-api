@@ -52,6 +52,7 @@ class APIComparePages(Resource):
     def post(self):
         args = self.args.parse_args()
         result = ComparePage(args.url).create(args.score, args.tag)
+        asyncio.run(Streaming().screenshot(args.url)
         return result
 
 api.add_resource(APIComparePages, '/api/v1/comparepages')
