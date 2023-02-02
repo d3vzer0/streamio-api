@@ -16,6 +16,6 @@ pyOpenSSL==19.0.0
 pyotp==2.2.7
 python-magic==0.4.15
 PyYAML==5.1
-Werkzeug==0.15.4
+Werkzeug==0.15.5
 WTForms==2.2.1
 requests
